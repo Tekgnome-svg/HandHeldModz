@@ -17,6 +17,11 @@ That same mission continues here.
 
 ---
 
+## 💬 Join Our Community
+Connect with other modders, ask questions, and share your projects on **Discord**:  
+[**Join the HandHeldModz Discord Server**](https://discord.gg/handheldmodz)  
+---
+
 ## 🎯 Supported Platforms
 We are currently building guides and mods for the following brands and handhelds:
 
