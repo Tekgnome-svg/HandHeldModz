@@ -75,6 +75,8 @@
 - Ensure all four module slots are clean and ready.  
 
 > ⚠️ Chips are pre-balled, but mishandling may damage them.
+> 
+![RAM Removed](images/ramremoved.jpg)
 
 ---
 
