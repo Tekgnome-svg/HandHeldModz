@@ -86,6 +86,7 @@ The ROG Ally is one of the **easiest Windows handhelds to disassemble**.
 
 ✅ Once reassembled, your Ally will have a DualShock-style D-Pad for improved ergonomics and feedback.
 
-![DualShock D-Pad installed example 1](./images/DualShock4-2.jpg)  
+![DualShock D-Pad installed example 1](./images/DualShock4-1.jpg)  
+![DualShock D-Pad installed example 2](./images/DualShock4-2.jpg)  
 ![DualShock D-Pad installed example 2](./images/DualShock4-4.jpg)  
-![DualShock D-Pad installed example 2](./images/DualShock4-1.jpg)  
+*DualShock-style D-Pad installed on the Ally (Alternative style).*  
