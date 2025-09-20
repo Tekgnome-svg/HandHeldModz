@@ -44,7 +44,8 @@ This is a guide and general overview of how to install and upgrade your **ROG Al
 ## Installation
 
 The ROG Ally is one of the **easiest Windows handhelds to disassemble**.  
-For reference, you can watch the [iFixit teardown video](#) to see the steps visually.
+📺 **Watch the teardown here:** [ifixit Teardown Video](https://www.youtube.com/watch?v=IxPgBhm6tHs)  
+
 
 ---
 
