@@ -1,3 +1,9 @@
+---
+title: "80W Ally X Battery Mod"
+slug: "80W-Ally-X-Battery-Mod"
+status: "published" 
+tags: ["Asus Rog Ally Modifications", "Asus"]
+---
 # 80W Ally X Battery Mod (OG Ally)
 
 > ⚠️ **Disclaimer:** By following this guide, you take full responsibility for your own actions.  
