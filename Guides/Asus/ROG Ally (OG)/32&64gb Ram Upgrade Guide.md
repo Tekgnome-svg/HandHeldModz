@@ -3,7 +3,7 @@
 > ⚠️ **Disclaimer:** By following this guide, you take full responsibility for your own actions.  
 > This is a very advanced mod with significant risks. Warranty will be voided, and improper handling may permanently damage your motherboard.  
 
----
+--
 
 ## Credits
 
