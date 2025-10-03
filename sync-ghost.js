@@ -125,4 +125,10 @@ sync();
     }
 }
 
-sync();
+(async () => {
+    try {
+        await sync();
+    } catch (err) {
+        console.error("Fatal error:", err);
+    }
+})();
