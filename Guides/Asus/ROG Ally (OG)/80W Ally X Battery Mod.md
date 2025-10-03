@@ -9,7 +9,7 @@ tags: ["Asus Rog Ally Modifications", "Asus"]
 > ⚠️ **Disclaimer:** By following this guide, you take full responsibility for your own actions.  
 > This mod involves cutting wires and soldering. Improper handling can damage your Ally or battery.  
 
----
+--
 
 ## Overview
 
