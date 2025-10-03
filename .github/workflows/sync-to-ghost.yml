@@ -3,7 +3,7 @@ name: Sync Ghost Posts
 on:
   push:
     paths:
-      - "Guides/**/*.md"   # watch all markdown files in Guides folder and subfolders
+      - "Guides/**/*.md"  # trigger on any markdown in Guides or subfolders
 
 jobs:
   sync:
@@ -19,11 +19,11 @@ jobs:
         with:
           node-version: "20"
 
-      # 3️⃣ Install dependencies
+      # 3️⃣ Install Node dependencies
       - name: Install dependencies
         run: npm install gray-matter node-fetch@2
 
-      # 4️⃣ Sync Markdown files to Ghost
+      # 4️⃣ Sync Markdown to Ghost
       - name: Sync Markdown to Ghost
         env:
           GHOST_ADMIN_API_URL: ${{ secrets.GHOST_ADMIN_API_URL }}
@@ -34,6 +34,75 @@ jobs:
           const path = require("path");
           const matter = require("gray-matter");
           const fetch = require("node-fetch");
+
+          const ghostUrl = process.env.GHOST_ADMIN_API_URL.replace(/\/$/, "");
+          const ghostKey = process.env.GHOST_ADMIN_API_KEY;
+
+          // Recursively find all markdown files
+          function getAllMarkdownFiles(dir) {
+            let files = [];
+            fs.readdirSync(dir, { withFileTypes: true }).forEach(entry => {
+              const fullPath = path.join(dir, entry.name);
+              if (entry.isFile() && entry.name.endsWith(".md")) {
+                files.push(fullPath);
+              } else if (entry.isDirectory()) {
+                files = files.concat(getAllMarkdownFiles(fullPath));
+              }
+            });
+            return files;
+          }
+
+          async function upsertPost(filePath) {
+            const raw = fs.readFileSync(filePath, "utf8");
+            const { data, content } = matter(raw);
+
+            if (!data.title || !data.slug) {
+              console.error(`Missing title or slug in ${filePath}`);
+              return;
+            }
+
+            const slugUrl = `${ghostUrl}/ghost/api/admin/posts/slug/${data.slug}/`;
+            const existingRes = await fetch(slugUrl, {
+              headers: { Authorization: `Ghost ${ghostKey}` }
+            });
+            let existing = null;
+            if (existingRes.ok) existing = await existingRes.json();
+
+            const postPayload = {
+              title: data.title,
+              slug: data.slug,
+              html: content,
+              status: data.status || "draft",
+              tags: data.tags || []
+            };
+
+            if (existing && existing.posts && existing.posts.length > 0) {
+              const id = existing.posts[0].id;
+              await fetch(`${ghostUrl}/ghost/api/admin/posts/${id}/`, {
+                method: "PUT",
+                headers: {
+                  "Authorization": `Ghost ${ghostKey}`,
+                  "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ posts: [postPayload] })
+              });
+              console.log(`Updated post: ${data.title}`);
+            } else {
+              await fetch(`${ghostUrl}/ghost/api/admin/posts/`, {
+                method: "POST",
+                headers: {
+                  "Authorization": `Ghost ${ghostKey}`,
+                  "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ posts: [postPayload] })
+              });
+              console.log(`Created new post: ${data.title}`);
+            }
+          }
+
+          const allMdFiles = getAllMarkdownFiles("Guides");
+          allMdFiles.forEach(f => upsertPost(f));
+          EOF
 
           const ghostUrl = process.env.GHOST_ADMIN_API_URL.replace(/\/$/, ""); // remove trailing slash
           const ghostKey = process.env.GHOST_ADMIN_API_KEY;
