@@ -1,0 +1,26 @@
+name: Sync Ghost
+
+on:
+  push:
+    paths:
+      - 'Guides/**.md'
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm install @tryghost/admin-api marked
+
+      - name: Run Ghost Sync
+        env:
+          GHOST_ADMIN_API_KEY: ${{ secrets.GHOST_ADMIN_API_KEY }}
+        run: node sync-ghost.js
