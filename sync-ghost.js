@@ -1,7 +1,7 @@
 const GhostAdminAPI = require('@tryghost/admin-api');
 const fs = require('fs');
 const path = require('path');
-const marked = require('marked');
+const { marked } = require('marked');
 
 const api = new GhostAdminAPI({
     url: 'https://handheldmodz.com',
