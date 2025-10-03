@@ -3,7 +3,6 @@ const fs = require('fs');
 const path = require('path');
 const { marked } = require('marked');
 
-// === CONFIG ===
 const api = new GhostAdminAPI({
     url: 'https://handheldmodz.com',
     key: process.env.GHOST_ADMIN_API_KEY,
@@ -12,20 +11,17 @@ const api = new GhostAdminAPI({
 
 const BASE_FOLDER = path.join(__dirname, 'Guides');
 
-// Map folder names to exact Ghost tags
 const tagMap = {
     'Asus': 'Asus ROG Ally Modifications',
     'Valve Steam Deck': 'Valve Steam Deck Modifications'
 };
 
-// Helper: generate safe slugs
 const slugify = str =>
     str.toLowerCase()
-       .replace(/\s+/g, '-')    // spaces → hyphens
-       .replace(/[^\w-]/g, '')  // remove special chars
-       .replace(/-+/g, '-');    // remove repeated hyphens
+       .replace(/\s+/g, '-')
+       .replace(/[^\w-]/g, '')
+       .replace(/-+/g, '-');
 
-// Recursively get all Markdown files
 function getMarkdownFiles(dir) {
     let files = [];
     fs.readdirSync(dir, { withFileTypes: true }).forEach(entry => {
@@ -34,6 +30,60 @@ function getMarkdownFiles(dir) {
             files = files.concat(getMarkdownFiles(fullPath));
         } else if (entry.name.endsWith('.md')) {
             files.push(fullPath);
+        }
+    });
+    return files;
+}
+
+async function sync() {
+    const mdFiles = getMarkdownFiles(BASE_FOLDER);
+
+    for (const filePath of mdFiles) {
+        try {
+            const markdown = fs.readFileSync(filePath, 'utf-8');
+            const htmlContent = marked(markdown);
+
+            const parts = filePath.split(path.sep);
+            const handheldName = parts[parts.indexOf('Guides') + 1];
+            const guideName = path.basename(filePath, '.md');
+
+            const slug = slugify(guideName);
+            const tag = tagMap[handheldName] || handheldName;
+            const tags = [tag, 'Mods-Guides'];
+
+            const postData = {
+                title: guideName,
+                html: htmlContent,
+                status: 'published',
+                slug,
+                tags
+            };
+
+            console.log(`Syncing post: "${guideName}" | slug: "${slug}" | tags: ${tags.join(', ')}`);
+
+            const posts = await api.posts.browse({ filter: `slug:${slug}` });
+            if (posts.length > 0) {
+                await api.posts.edit({ id: posts[0].id, ...postData });
+                console.log(`✅ Updated post: ${guideName}`);
+            } else {
+                await api.posts.add(postData);
+                console.log(`✅ Created post: ${guideName}`);
+            }
+
+        } catch (err) {
+            console.error(`❌ Error syncing file ${filePath}:`, err);
+        }
+    }
+}
+
+(async () => {
+    try {
+        await sync();
+        console.log('🎉 All Markdown files synced to Ghost successfully!');
+    } catch (err) {
+        console.error('❌ Fatal error during sync:', err);
+    }
+})();
         }
     });
     return files;
