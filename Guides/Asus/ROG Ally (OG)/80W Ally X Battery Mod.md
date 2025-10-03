@@ -34,7 +34,7 @@ Asus added an enable circuit to the Ally X battery.
 - **LowKeyLoki** – Help with BMC and testing  
 - **Seth** – Battery tray designer with cooling channels  
 - **DesignGears** – Alternative battery tray designer  
-- **Tekgnome** – Inventor / Project Lead, testing  
+- **Tekgnome** – Inventor / Project Lead, testing  GITHUB
 
 ---
 
