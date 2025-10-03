@@ -6,7 +6,7 @@ const { marked } = require('marked');
 // === CONFIG ===
 const api = new GhostAdminAPI({
     url: 'https://handheldmodz.com',
-    key: process.env.GHOST_ADMIN_API_KEY, // GitHub Secret
+    key: process.env.GHOST_ADMIN_API_KEY,
     version: 'v5.0'
 });
 
@@ -34,6 +34,66 @@ function getMarkdownFiles(dir) {
             files = files.concat(getMarkdownFiles(fullPath));
         } else if (entry.name.endsWith('.md')) {
             files.push(fullPath);
+        }
+    });
+    return files;
+}
+
+// Main sync function
+async function sync() {
+    const mdFiles = getMarkdownFiles(BASE_FOLDER);
+
+    for (const filePath of mdFiles) {
+        try {
+            const markdown = fs.readFileSync(filePath, 'utf-8');
+            const htmlContent = marked(markdown);
+
+            // Extract handheld and guide name
+            const parts = filePath.split(path.sep);
+            const handheldName = parts[parts.indexOf('Guides') + 1];
+            const guideName = path.basename(filePath, '.md');
+
+            // Slug for the post URL
+            const slug = slugify(guideName);
+
+            // Map folder → tag
+            const tag = tagMap[handheldName] || handheldName;
+            const tags = [tag, 'Mods-Guides'];
+
+            const postData = {
+                title: guideName,
+                html: htmlContent,
+                status: 'published',
+                slug,
+                tags
+            };
+
+            console.log(`Syncing post: "${guideName}" | slug: "${slug}" | tags: ${tags.join(', ')}`);
+
+            // Check if post exists
+            const posts = await api.posts.browse({ filter: `slug:${slug}` });
+            if (posts.length > 0) {
+                await api.posts.edit({ id: posts[0].id, ...postData });
+                console.log(`✅ Updated post: ${guideName}`);
+            } else {
+                await api.posts.add(postData);
+                console.log(`✅ Created post: ${guideName}`);
+            }
+        } catch (err) {
+            console.error(`❌ Error syncing file ${filePath}:`, err);
+        }
+    }
+}
+
+// === Top-Level Async Wrapper ===
+(async () => {
+    try {
+        await sync();
+        console.log('🎉 All Markdown files synced to Ghost successfully!');
+    } catch (err) {
+        console.error('❌ Fatal error during sync:', err);
+    }
+})();
         }
     });
     return files;
