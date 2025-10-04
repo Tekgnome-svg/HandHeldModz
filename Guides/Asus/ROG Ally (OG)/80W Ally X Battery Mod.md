@@ -1,9 +1,13 @@
 ---
 title: "80W Ally X Battery Mod"
-slug: "80W-Ally-X-Battery-Mod"
-status: "published" 
-tags: ["Asus Rog Ally Modifications", "Asus"]
+slug: "80w-ally-x-battery-mod"
+tags: ["handheld", "modding"]
+feature_image: "https://handheldmodz.com/content/images/allyx-battery.jpg"
+excerpt: "A deep dive into upgrading your Ally X with an 80W battery."
 ---
+
+Here’s how to install and configure the new 80W battery mod for your Ally X handheld...
+
 # 80W Ally X Battery Mod (OG Ally)
 
 > ⚠️ **Disclaimer:** By following this guide, you take full responsibility for your own actions.  
