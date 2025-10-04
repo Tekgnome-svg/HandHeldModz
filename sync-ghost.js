@@ -1,4 +1,3 @@
-// sync-ghost.js
 import fs from "fs";
 import path from "path";
 import axios from "axios";
@@ -8,7 +7,6 @@ import jwt from "jsonwebtoken";
 
 const md = new MarkdownIt();
 
-// --- Configuration ---
 const GHOST_URL = process.env.GHOST_ADMIN_API_URL;
 const ADMIN_API_KEY = process.env.GHOST_ADMIN_API_KEY;
 
@@ -17,7 +15,7 @@ if (!GHOST_URL || !ADMIN_API_KEY) {
   process.exit(1);
 }
 
-// --- JWT Token ---
+// JWT token
 function makeToken() {
   const [id, secret] = ADMIN_API_KEY.split(":");
   return jwt.sign({}, Buffer.from(secret, "hex"), {
@@ -39,32 +37,20 @@ const IGNORE_PATTERNS = [
   "contributing",
 ];
 
-const VALID_DIRECTORIES = ["posts", "guides", "articles"]; // adjust to your repo layout
+// Get files from command-line arguments
+let files = process.argv.slice(2)
+  .flatMap((f) => f.split(",")) // handle comma-separated lists
+  .filter((f) => f.endsWith(".md"))  // only markdown
+  .filter((f) => !IGNORE_PATTERNS.some((p) => f.toLowerCase().includes(p))); // ignore junk
 
-function getMarkdownFiles(dir) {
-  let files = [];
-  for (const file of fs.readdirSync(dir)) {
-    const fullPath = path.join(dir, file);
-    if (fs.statSync(fullPath).isDirectory()) {
-      files = files.concat(getMarkdownFiles(fullPath));
-    } else if (file.endsWith(".md")) {
-      // Skip junk files
-      const lower = file.toLowerCase();
-      if (IGNORE_PATTERNS.some((p) => lower.includes(p))) continue;
-
-      // Optional: only include files in valid directories
-      if (VALID_DIRECTORIES.length && !VALID_DIRECTORIES.some((d) => fullPath.includes(`/${d}/`))) continue;
-
-      files.push(fullPath);
-    }
-  }
-  return files;
+if (!files.length) {
+  console.log("📝 No markdown files to sync for this commit.");
+  process.exit(0);
 }
 
-// --- Main sync function ---
+// --- Publish ---
 async function publishToGhost() {
-  const files = getMarkdownFiles("./");
-  console.log(`📝 Found ${files.length} markdown files to sync`);
+  console.log(`📝 Syncing ${files.length} markdown file(s)`);
 
   const token = makeToken();
   const api = axios.create({
@@ -73,6 +59,8 @@ async function publishToGhost() {
   });
 
   for (const file of files) {
+    if (!fs.existsSync(file)) continue; // skip deleted files
+
     const raw = fs.readFileSync(file, "utf8");
     const { data, content } = matter(raw);
     const html = md.render(content);
