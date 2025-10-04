@@ -9,15 +9,15 @@ import jwt from "jsonwebtoken";
 const md = new MarkdownIt();
 
 // --- Configuration ---
-const GHOST_URL = process.env.GHOST_ADMIN_API_URL; // e.g. https://handheldmodz.com
-const ADMIN_API_KEY = process.env.GHOST_ADMIN_API_KEY; // From Ghost → Integrations
+const GHOST_URL = process.env.GHOST_ADMIN_API_URL;
+const ADMIN_API_KEY = process.env.GHOST_ADMIN_API_KEY;
 
 if (!GHOST_URL || !ADMIN_API_KEY) {
   console.error("❌ Missing Ghost API credentials!");
   process.exit(1);
 }
 
-// --- Create a JWT token for authentication ---
+// --- JWT Token ---
 function makeToken() {
   const [id, secret] = ADMIN_API_KEY.split(":");
   return jwt.sign({}, Buffer.from(secret, "hex"), {
@@ -29,6 +29,18 @@ function makeToken() {
 }
 
 // --- Helpers ---
+const IGNORE_PATTERNS = [
+  "readme",
+  "changelog",
+  "license",
+  "migration",
+  "history",
+  "security",
+  "contributing",
+];
+
+const VALID_DIRECTORIES = ["posts", "guides", "articles"]; // adjust to your repo layout
+
 function getMarkdownFiles(dir) {
   let files = [];
   for (const file of fs.readdirSync(dir)) {
@@ -36,6 +48,13 @@ function getMarkdownFiles(dir) {
     if (fs.statSync(fullPath).isDirectory()) {
       files = files.concat(getMarkdownFiles(fullPath));
     } else if (file.endsWith(".md")) {
+      // Skip junk files
+      const lower = file.toLowerCase();
+      if (IGNORE_PATTERNS.some((p) => lower.includes(p))) continue;
+
+      // Optional: only include files in valid directories
+      if (VALID_DIRECTORIES.length && !VALID_DIRECTORIES.some((d) => fullPath.includes(`/${d}/`))) continue;
+
       files.push(fullPath);
     }
   }
@@ -45,7 +64,7 @@ function getMarkdownFiles(dir) {
 // --- Main sync function ---
 async function publishToGhost() {
   const files = getMarkdownFiles("./");
-  console.log(`📝 Found ${files.length} markdown files`);
+  console.log(`📝 Found ${files.length} markdown files to sync`);
 
   const token = makeToken();
   const api = axios.create({
