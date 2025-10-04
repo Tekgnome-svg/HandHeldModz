@@ -5,7 +5,7 @@ on:
     branches:
       - main
     paths:
-      - "**.md"
+      - "**/*.md"  # trigger only on markdown changes
 
 jobs:
   publish:
@@ -24,7 +24,7 @@ jobs:
         run: npm install axios gray-matter markdown-it jsonwebtoken
 
       - name: Run sync script
-        run: node sync-ghost.js
+        run: node sync-ghost.js ${{ github.event.head_commit.added }} ${{ github.event.head_commit.modified }}
         env:
           GHOST_ADMIN_API_URL: ${{ secrets.GHOST_ADMIN_API_URL }}
           GHOST_ADMIN_API_KEY: ${{ secrets.GHOST_ADMIN_API_KEY }}
