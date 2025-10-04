@@ -5,7 +5,7 @@ on:
     branches:
       - main
     paths:
-      - "**/*.md"  # trigger only on markdown changes
+      - "**/*.md"
 
 jobs:
   publish:
@@ -23,8 +23,14 @@ jobs:
       - name: Install dependencies
         run: npm install axios gray-matter markdown-it jsonwebtoken
 
+      - name: Get changed markdown files
+        id: changed_files
+        run: |
+          # Get all added/modified .md files in the push
+          echo "FILES=$(git diff --name-only ${{ github.sha }}^ ${{ github.sha }} | grep '\.md$' || true)" >> $GITHUB_ENV
+
       - name: Run sync script
-        run: node sync-ghost.js ${{ github.event.head_commit.added }} ${{ github.event.head_commit.modified }}
+        run: node sync-ghost.js $FILES
         env:
           GHOST_ADMIN_API_URL: ${{ secrets.GHOST_ADMIN_API_URL }}
           GHOST_ADMIN_API_KEY: ${{ secrets.GHOST_ADMIN_API_KEY }}
