@@ -1,3 +1,4 @@
+// sync-ghost.js
 import fs from "fs";
 import path from "path";
 import axios from "axios";
@@ -7,6 +8,7 @@ import jwt from "jsonwebtoken";
 
 const md = new MarkdownIt();
 
+// --- Ghost configuration ---
 const GHOST_URL = process.env.GHOST_ADMIN_API_URL;
 const ADMIN_API_KEY = process.env.GHOST_ADMIN_API_KEY;
 
@@ -15,7 +17,7 @@ if (!GHOST_URL || !ADMIN_API_KEY) {
   process.exit(1);
 }
 
-// JWT token
+// --- JWT for Ghost Admin API ---
 function makeToken() {
   const [id, secret] = ADMIN_API_KEY.split(":");
   return jwt.sign({}, Buffer.from(secret, "hex"), {
@@ -26,40 +28,31 @@ function makeToken() {
   });
 }
 
-// --- Helpers ---
-const IGNORE_PATTERNS = [
-  "readme",
-  "changelog",
-  "license",
-  "migration",
-  "history",
-  "security",
-  "contributing",
-];
-
-// Get files from command-line arguments
-let files = process.argv.slice(2)
-  .flatMap((f) => f.split(",")) // handle comma-separated lists
-  .filter((f) => f.endsWith(".md"))  // only markdown
-  .filter((f) => !IGNORE_PATTERNS.some((p) => f.toLowerCase().includes(p))); // ignore junk
+// --- Get files from command-line arguments ---
+const files = process.argv.slice(2);
 
 if (!files.length) {
   console.log("📝 No markdown files to sync for this commit.");
   process.exit(0);
 }
 
-// --- Publish ---
+console.log(`📝 Found ${files.length} markdown files to sync.`);
+
+// --- Ghost API client ---
+const token = makeToken();
+const api = axios.create({
+  baseURL: `${GHOST_URL}/ghost/api/admin/`,
+  headers: { Authorization: `Ghost ${token}` },
+});
+
+// --- Main publish function ---
 async function publishToGhost() {
-  console.log(`📝 Syncing ${files.length} markdown file(s)`);
-
-  const token = makeToken();
-  const api = axios.create({
-    baseURL: `${GHOST_URL}/ghost/api/admin/`,
-    headers: { Authorization: `Ghost ${token}` },
-  });
-
   for (const file of files) {
-    if (!fs.existsSync(file)) continue; // skip deleted files
+    // Skip if file doesn't exist
+    if (!fs.existsSync(file)) {
+      console.warn(`⚠️ File not found: ${file}`);
+      continue;
+    }
 
     const raw = fs.readFileSync(file, "utf8");
     const { data, content } = matter(raw);
