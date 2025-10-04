@@ -8,8 +8,8 @@ import MarkdownIt from "markdown-it";
 const md = new MarkdownIt();
 
 // --- Configuration ---
-const ghostURL = process.env.GHOST_ADMIN_API_URL; // Example: https://your-site.com
-const ghostKey = process.env.GHOST_ADMIN_API_KEY; // Found in Ghost Admin -> Integrations
+const ghostURL = process.env.GHOST_ADMIN_API_URL; // e.g. https://handheldmodz.com
+const ghostKey = process.env.GHOST_ADMIN_API_KEY; // From Ghost Admin → Integrations
 
 if (!ghostURL || !ghostKey) {
   console.error("❌ Missing Ghost API credentials!");
@@ -44,25 +44,28 @@ async function publishToGhost() {
     const slug = data.slug || title.toLowerCase().replace(/\s+/g, "-");
 
     const post = {
-      posts: [
-        {
-          title,
-          slug,
-          html,
-          status: "published",
-          tags: data.tags || [],
-          feature_image: data.feature_image || null,
-          custom_excerpt: data.excerpt || null,
-        },
-      ],
+      title,
+      slug,
+      html,
+      status: "published",
+      tags: data.tags || [],
+      feature_image: data.feature_image || null,
+      custom_excerpt: data.excerpt || null,
     };
 
+    const apiUrl = `${ghostURL}/ghost/api/admin/posts/?source=html&key=${ghostKey}`;
+
     try {
-      const url = `${ghostURL}/ghost/api/admin/posts/?key=${ghostKey}`;
-      await axios.post(url, post, { headers: { "Content-Type": "application/json" } });
+      const res = await axios.post(apiUrl, { posts: [post] }, {
+        headers: { "Content-Type": "application/json" },
+      });
       console.log(`✅ Published: ${title}`);
     } catch (err) {
-      console.error(`❌ Failed to publish ${title}: ${err.response?.data || err.message}`);
+      // Print the full Ghost API response for easier debugging
+      const msg = err.response?.data?.errors?.[0]
+        ? `${err.response.data.errors[0].message} (${err.response.data.errors[0].context || "no context"})`
+        : err.message;
+      console.error(`❌ Failed to publish "${title}": ${msg}`);
     }
   }
 }
