@@ -1,0 +1,30 @@
+name: Sync Markdown to Ghost
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "**.md"
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install dependencies
+        run: npm install axios gray-matter markdown-it
+
+      - name: Run sync script
+        run: node sync-ghost.js
+        env:
+          GHOST_ADMIN_API_URL: ${{ secrets.GHOST_ADMIN_API_URL }}
+          GHOST_ADMIN_API_KEY: ${{ secrets.GHOST_ADMIN_API_KEY }}
