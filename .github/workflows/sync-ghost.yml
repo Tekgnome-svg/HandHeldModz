@@ -12,29 +12,47 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # 1️⃣ Checkout repo with last 2 commits so we can use git diff if needed
       - name: Checkout repo
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
 
+      # 2️⃣ Set up Node.js
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: "20"
 
+      # 3️⃣ Install dependencies
       - name: Install dependencies
         run: npm install axios gray-matter markdown-it jsonwebtoken
 
+      # 4️⃣ Get changed markdown files
       - name: Get changed markdown files
         id: changed_files
         run: |
-          # Get all added/modified .md files in the push
-          CHANGED_MD=$(git diff --name-only ${{ github.sha }}^ ${{ github.sha }} | grep '\.md$' || true)
-          echo "CHANGED_MD=$CHANGED_MD" >> $GITHUB_ENV
+          FILES="${{ github.event.head_commit.added }} ${{ github.event.head_commit.modified }}"
+          CHANGED_MD=$(echo $FILES | tr ',' '\n' | grep '\.md$' || true)
 
+          # Filter out junk files
+          CHANGED_MD=$(echo "$CHANGED_MD" | grep -viE "README|CHANGELOG|LICENSE|SECURITY|MIGRATION|HISTORY")
+
+          # Join back into space-separated list
+          CHANGED_MD=$(echo "$CHANGED_MD" | tr '\n' ' ')
+
+          echo "CHANGED_MD=$CHANGED_MD" >> $GITHUB_ENV
+          echo "Files to sync: $CHANGED_MD"
+
+      # 5️⃣ Run the sync script
       - name: Run sync script
         env:
           GHOST_ADMIN_API_URL: ${{ secrets.GHOST_ADMIN_API_URL }}
           GHOST_ADMIN_API_KEY: ${{ secrets.GHOST_ADMIN_API_KEY }}
           CHANGED_MD: ${{ env.CHANGED_MD }}
         run: |
-          echo "Files to sync: $CHANGED_MD"
-          node sync-ghost.js $CHANGED_MD
+          if [ -z "$CHANGED_MD" ]; then
+            echo "📝 No markdown files to sync for this commit."
+          else
+            node sync-ghost.js $CHANGED_MD
+          fi
