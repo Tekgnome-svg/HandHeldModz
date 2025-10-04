@@ -14,7 +14,7 @@ Here’s how to install and configure the new 80W battery mod for your Ally X ha
 > This mod involves cutting wires and soldering. Improper handling can damage your Ally or battery.  
 
 ---
-
+-
 ## Overview
 
 This guide details installing the **Ally X 80W battery** into your OG Ally.  
